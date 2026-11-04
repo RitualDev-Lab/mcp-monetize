@@ -101,3 +101,56 @@ test("mcp-monetize subscriber status bypasses paywall without consuming credits"
   assert.equal(res.isError, undefined);
   assert.equal(res.content[0].text, "VIP Access");
 });
+
+test("McpLicenseValidator generates and verifies tamper-proof license keys", () => {
+  const { McpLicenseValidator } = require("../src/index.js");
+  const validator = new McpLicenseValidator("secret_test_key_123");
+
+  const license = validator.generateLicenseKey({
+    customerEmail: "founder@client.com",
+    tier: "pro",
+  });
+
+  assert.match(license, /^MCP-PRO-/);
+
+  const res = validator.validateLicenseKey(license);
+  assert.equal(res.valid, true);
+  assert.equal(res.tier, "pro");
+  assert.equal(res.customerEmail, "founder@client.com");
+
+  // Tampered key should fail
+  const tampered = license.slice(0, -3) + "XYZ";
+  const failRes = validator.validateLicenseKey(tampered);
+  assert.equal(failRes.valid, false);
+});
+
+test("PaymentWebhookHandler fulfills Dodo and Stripe events", async () => {
+  const { PaymentWebhookHandler, MemoryTokenStore } = require("../src/index.js");
+  const store = new MemoryTokenStore(0);
+  const handler = new PaymentWebhookHandler({ store });
+
+  // Dodo payment.succeeded event
+  await handler.handleDodoWebhook({
+    type: "payment.succeeded",
+    data: {
+      customer: { customer_id: "buyer_dodo" },
+      metadata: { credits: 500 },
+    },
+  });
+
+  const user = store.getUser("buyer_dodo");
+  assert.equal(user.paidCredits, 500);
+
+  // Stripe subscription event
+  await handler.handleStripeWebhook({
+    type: "customer.subscription.created",
+    data: {
+      object: {
+        customer: "buyer_stripe",
+      },
+    },
+  });
+
+  const subUser = store.getUser("buyer_stripe");
+  assert.equal(subUser.isSubscriber, true);
+});

@@ -100,7 +100,25 @@ import { MemoryTokenStore } from "mcp-monetize";
 const store = new MemoryTokenStore(5);
 ```
 
-### 2. JSON File Persistence
+### 2. SQLite Database Persistence
+Built-in `node:sqlite` store with zero native dependencies. Supports thread-safe transactions and atomic balances.
+```typescript
+import { SqliteTokenStore } from "mcp-monetize/adapters/sqlite";
+const store = new SqliteTokenStore("./data/mcp-credits.sqlite", 10);
+```
+
+### 3. Serverless Redis / Upstash
+Designed for cloud-hosted MCP servers (Render, Fly.io, Railway, AWS Lambda).
+```typescript
+import { RedisTokenStore } from "mcp-monetize/adapters/redis";
+const store = new RedisTokenStore({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  defaultFreeCredits: 10
+});
+```
+
+### 4. JSON File Persistence
 Zero database dependencies; persists user credits across server restarts in `mcp-credits.json`.
 ```typescript
 import { JsonFileTokenStore } from "mcp-monetize";
@@ -109,25 +127,58 @@ const store = new JsonFileTokenStore("./data/credits.json", 10);
 
 ---
 
-## 🤝 Webhook Integration (Dodo Payments & Stripe)
+## 🤝 Webhook Fulfillment Engine (Turnkey Dodo & Stripe)
 
-When a customer pays, replenish their credits via your API or webhook:
+Use the built-in `PaymentWebhookHandler` to process checkouts and replenish user credits automatically:
 
 ```typescript
-import { store } from "./server.js";
+import { PaymentWebhookHandler, SqliteTokenStore } from "mcp-monetize";
 
-app.post("/webhook/dodo", async (req, res) => {
-  const event = req.body;
-  if (event.type === "payment.succeeded") {
-    const customerId = event.data.customer.customer_id;
-    const creditsPurchased = event.data.metadata.credits || 1000;
+const store = new SqliteTokenStore("./data/tokens.sqlite");
+const webhooks = new PaymentWebhookHandler({
+  store,
+  dodoWebhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET
+});
 
-    store.addPaidCredits(customerId, creditsPurchased);
-    console.log(`Credited ${creditsPurchased} calls to ${customerId}`);
-  }
-  res.sendStatus(200);
+// In your Express or Fastify server:
+app.post("/api/webhooks/dodo", async (req, res) => {
+  const result = await webhooks.handleDodoWebhook(req.body, req.headers["x-dodo-signature"]);
+  res.status(result.success ? 200 : 400).json(result);
 });
 ```
+
+---
+
+## 🔐 Cryptographic License Key Verification
+
+For off-line or client-side MCP distribution (where users supply a license key in `claude_desktop_config.json`):
+
+```typescript
+import { McpLicenseValidator } from "mcp-monetize";
+
+const validator = new McpLicenseValidator("your_hmac_secret_key_min_32_chars");
+
+// Issue a 30-day license key:
+const token = validator.generateLicenseKey("user_456", 30);
+
+// Verify inside your tool:
+const check = validator.verifyLicense(token);
+if (check.valid) {
+  console.log(`Verified user ${check.userId}, expires: ${check.expiresAt}`);
+}
+```
+
+---
+
+## 📦 Turnkey Starter Kit & Production Examples
+
+Looking for ready-to-deploy boilerplates? Check the `examples/` directory:
+1. `examples/01-weather-api-server.ts` — Pay-per-query API ($5 for 500 calls).
+2. `examples/02-sql-agent-server.ts` — Monthly recurring subscription with HMAC license verification.
+3. `examples/03-web-scraper-server.ts` — Usage credits with turnkey Dodo checkout webhook.
+
+👉 **Get the complete package with instant setup at [ritualdev.in/mcp-starter-kit](https://ritualdev.in/mcp-starter-kit)**.
 
 ---
 
