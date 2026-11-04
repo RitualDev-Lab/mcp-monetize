@@ -1,0 +1,39 @@
+{
+  "name": "mcp-monetize",
+  "version": "0.1.0",
+  "description": "Drop-in billing & paywall middleware for Model Context Protocol (MCP) servers with Dodo Payments & Stripe support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsx --test tests/middleware.test.ts",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "monetization",
+    "billing",
+    "stripe",
+    "dodo-payments",
+    "paywall",
+    "ai-agents",
+    "claude-desktop",
+    "cursor"
+  ],
+  "author": "RitualDev Lab <founder@ritualdev.in>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RitualDev-Lab/mcp-monetize.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RitualDev-Lab/mcp-monetize/issues"
+  },
+  "homepage": "https://ritualdev.in/mcp-builder",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0"
+  }
+}
