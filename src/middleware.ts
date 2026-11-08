@@ -1,9 +1,11 @@
 import { generatePaywallResponse } from "./paywall.js";
 import { MemoryTokenStore } from "./store.js";
+import { McpCapabilityTokenManager } from "./capability.js";
 import type { McpMonetizeOptions, McpToolCallResult } from "./types.js";
 
 /**
- * Wraps an MCP tool handler with automated paywall, quota, and credit verification.
+ * Wraps an MCP tool handler with automated paywall, quota, credit verification,
+ * and cryptographic PASETO capability token validation.
  * Compatible with @modelcontextprotocol/sdk Server tool definitions.
  *
  * @example
@@ -28,8 +30,35 @@ export function withMcpMonetization<TArgs extends Record<string, any> = Record<s
   const freeTierCalls = options.freeTierCalls ?? 5;
   const priceLabel = options.priceLabel || "$0.05 / call";
   const store = options.store || new MemoryTokenStore(freeTierCalls);
+  const capabilityManager: McpCapabilityTokenManager =
+    options.capabilityManager || new McpCapabilityTokenManager(options.capabilitySecret);
 
   return async (args: TArgs, extra?: any): Promise<McpToolCallResult> => {
+    // 0. Cryptographic Capability Token Verification (Sub-millisecond offline path)
+    const presentedToken =
+      (args && (args.capabilityToken || args._capabilityToken)) ||
+      (extra && (extra.capabilityToken || extra._capabilityToken));
+
+    if (typeof presentedToken === "string") {
+      const toolScope = options.requiredScope || (extra?.name ? `tool:${extra.name}` : undefined);
+      const verification = capabilityManager.verifyToken(presentedToken, toolScope);
+
+      if (verification.valid) {
+        // Authenticated cryptographically in < 0.2ms — execute tool logic immediately
+        return handler(args, extra);
+      } else {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `[MCP-MONETIZE] Cryptographic Capability Token Verification Failed: ${verification.error}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
     // 1. Resolve User / Client Identifier
     let userId: string;
     if (options.getUserId) {

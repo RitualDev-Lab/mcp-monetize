@@ -30,6 +30,12 @@ export interface McpMonetizeOptions {
   store?: TokenStore;
   /** Custom paywall markdown generator */
   customPaywallMessage?: (info: { userId: string; checkoutUrl: string; priceLabel: string }) => string;
+  /** Cryptographic signing secret for PASETO capability tokens */
+  capabilitySecret?: string;
+  /** Custom capability token manager instance */
+  capabilityManager?: any;
+  /** Required capability scope for this specific tool (e.g. 'tool:search') */
+  requiredScope?: string;
 }
 
 export interface McpToolCallResult {

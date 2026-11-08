@@ -6,3 +6,4 @@ export * from "./adapters/sqlite.js";
 export * from "./adapters/redis.js";
 export * from "./webhooks.js";
 export * from "./license.js";
+export * from "./capability.js";
