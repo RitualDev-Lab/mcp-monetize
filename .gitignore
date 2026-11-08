@@ -3,3 +3,7 @@ dist/
 mcp-credits.json
 .DS_Store
 *.log
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
