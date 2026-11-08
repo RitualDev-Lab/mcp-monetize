@@ -1,0 +1,12 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      secretKey:
+        type: string
+        description: 32-byte secret key for PASETO v4 token minting and verification
+  commandFunction:
+    node:
+      - node
+      - dist/cli.js

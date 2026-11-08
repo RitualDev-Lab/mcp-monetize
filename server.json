@@ -1,0 +1,31 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.ritualdev-lab/mcp-monetize",
+  "title": "MCP Monetize - Drop-in Billing & Capability Token Engine for MCP Servers",
+  "description": "Drop-in billing, paywall, and sub-0.2ms PASETO v4 capability token middleware for Model Context Protocol (MCP) servers with Dodo Payments & Stripe support",
+  "version": "0.1.0",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/RitualDev-Lab/mcp-monetize",
+    "source": "github"
+  },
+  "website": "https://ritualdev.in",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "mcp-monetize",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
+      "registryType": "pypi",
+      "identifier": "mcp-monetize",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
