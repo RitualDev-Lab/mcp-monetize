@@ -34,7 +34,13 @@ export class McpCapabilityTokenManager {
    * Issues a signed, tamper-proof capability token in PASETO v4.local style format.
    * Format: v4.local.<base64url-payload>.<hmac-sha256>
    */
-  issueToken(payload: Omit<CapabilityTokenPayload, "tokenId" | "issuedAt"> & { tokenId?: string; issuedAt?: string }): string {
+  issueToken(
+    payload: Omit<CapabilityTokenPayload, "tokenId" | "issuedAt" | "issuer"> & {
+      tokenId?: string;
+      issuedAt?: string;
+      issuer?: string;
+    }
+  ): string {
     const fullPayload: CapabilityTokenPayload = {
       tokenId: payload.tokenId || `cap_${crypto.randomBytes(8).toString("hex")}`,
       issuer: payload.issuer || "ritualdev-mcp-monetize",
