@@ -7,6 +7,15 @@
   "bin": {
     "mcp-monetize": "./bin/mcp-monetize.js"
   },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "tsx --test tests/*.test.ts",
