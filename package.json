@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "mcp-monetize": "./bin/mcp-monetize.js"
+    "mcp-monetize": "bin/mcp-monetize.js"
   },
   "files": [
     "bin",
@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/RitualDev-Lab/mcp-monetize.git"
+    "url": "git+https://github.com/RitualDev-Lab/mcp-monetize.git"
   },
   "bugs": {
     "url": "https://github.com/RitualDev-Lab/mcp-monetize/issues"
