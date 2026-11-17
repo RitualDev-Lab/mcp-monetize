@@ -184,3 +184,12 @@ Looking for ready-to-deploy boilerplates? Check the `examples/` directory:
 
 ## 📜 License
 MIT © [RitualDev Lab](https://ritualdev.in)
+
+---
+
+## 🛡️ Community & Governance
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+- [Accessibility Statement](ACCESSIBILITY.md)
+- [License](LICENSE)
