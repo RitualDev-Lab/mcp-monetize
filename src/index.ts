@@ -7,3 +7,6 @@ export * from "./adapters/redis.js";
 export * from "./webhooks.js";
 export * from "./license.js";
 export * from "./capability.js";
+export * from "./clearinghouse.js";
+export * from "./universal-credits.js";
+export * from "./universal-middleware.js";
