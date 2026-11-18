@@ -17,6 +17,13 @@ Developers are publishing thousands of Model Context Protocol (MCP) servers for 
 
 `mcp-monetize` solves this by giving MCP server creators an effortless 3-line drop-in middleware that manages quotas, verifies credits, and returns interactive payment links directly inside the agent chat when quotas run out.
 
+### `mcp-monetize` vs. `mcp-builder-kit`
+
+| Package | Role | When to Use |
+| :--- | :--- | :--- |
+| **`mcp-monetize`** (this repo) | **Commercial Billing Clearinghouse & Paywall SDK** | Monetizing MCP tool invocations with Universal Pre-Paid MCP Credits, usage quotas, Dodo Payments / Stripe checkout links, and webhook-driven credit settlement. |
+| **`@ritualdev-lab/mcp-builder-kit`** ([RitualDev-Lab/mcp-builder-kit](https://github.com/RitualDev-Lab/mcp-builder-kit)) | **Free Open-Source (Apache-2.0) MCP Scaffolding CLI** | Bootstrapping TypeScript/Python MCP servers (`stdio` / `streamable-http`), wrapping tools with `--with-agentshield` redaction, converting OpenAPI/GraphQL/Protobuf specs, and running protocol conformance tests. |
+
 ---
 
 ## 🚀 Quickstart (3 Lines of Code)
