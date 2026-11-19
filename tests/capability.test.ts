@@ -91,3 +91,41 @@ test("withMcpMonetization authorizes requests instantly when a valid capability 
   assert.equal(res.isError, undefined);
   assert.equal(res.content[0].text, "Success: ping");
 });
+
+test("withMcpMonetization atomically decrements capability token balance and blocks exhausted tokens", async () => {
+  const manager = new McpCapabilityTokenManager("enterprise_test_secret_32bytes_min");
+  const fundedToken = manager.issueToken({
+    subject: "agent_quota_user",
+    scopes: ["tool:spend_query"],
+    creditsRemaining: 2, // Exactly 2 calls funded
+    expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+  });
+
+  let executions = 0;
+  const tool = withMcpMonetization(
+    async () => {
+      executions++;
+      return { content: [{ type: "text", text: "OK" }] };
+    },
+    {
+      checkoutUrl: "https://dodo.mock/checkout",
+      freeTierCalls: 0,
+      capabilityManager: manager,
+      requiredScope: "tool:spend_query",
+    }
+  );
+
+  // Call 1: Allowed (balance: 2 -> 1)
+  const r1 = await tool({ capabilityToken: fundedToken });
+  assert.equal(r1.isError, undefined);
+
+  // Call 2: Allowed (balance: 1 -> 0)
+  const r2 = await tool({ capabilityToken: fundedToken });
+  assert.equal(r2.isError, undefined);
+
+  // Call 3: Blocked (balance: 0 -> exhausted)
+  const r3 = await tool({ capabilityToken: fundedToken });
+  assert.equal(r3.isError, true);
+  assert.match(r3.content[0].text, /Insufficient capability token balance/);
+  assert.equal(executions, 2);
+});

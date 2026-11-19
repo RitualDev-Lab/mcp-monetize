@@ -144,7 +144,7 @@ import { PaymentWebhookHandler, SqliteTokenStore } from "mcp-monetize";
 const store = new SqliteTokenStore("./data/tokens.sqlite");
 const webhooks = new PaymentWebhookHandler({
   store,
-  dodoWebhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY,
+  dodoWebhookSecret: process.env.DODO_WEBHOOK_SECRET || process.env.DODO_PAYMENTS_WEBHOOK_KEY,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET
 });
 

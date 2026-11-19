@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { EdgeBillingClearinghouse } from "./clearinghouse.js";
 
 export interface UniversalMonetizeOptions {
@@ -14,6 +15,8 @@ export interface McpCallRequest {
     arguments?: Record<string, unknown>;
   };
   userId?: string;
+  authenticated?: boolean;
+  sessionId?: string;
 }
 
 export interface McpCallResponse {
@@ -49,10 +52,19 @@ export function withUniversalMcpMonetize<T extends (req: McpCallRequest) => Prom
       return handler(req);
     }
 
-    const userId = req.userId || "anonymous_agent";
+    // Partition unauthenticated anonymous users by session rather than a global shared balance
+    let userId: string;
+    if (req.userId) {
+      userId = req.userId;
+    } else if (req.sessionId) {
+      userId = `session_${req.sessionId}`;
+    } else {
+      userId = `anon_${crypto.randomUUID().slice(0, 8)}`;
+    }
 
-    // Bypass list for internal testing
-    if (options.bypassUsers && options.bypassUsers.includes(userId)) {
+    // Bypass list ONLY permitted for verified authenticated sessions
+    const isAuthenticated = Boolean(req.authenticated || req.userId);
+    if (isAuthenticated && options.bypassUsers && options.bypassUsers.includes(userId)) {
       return handler(req);
     }
 
@@ -69,7 +81,7 @@ export function withUniversalMcpMonetize<T extends (req: McpCallRequest) => Prom
         isError: true,
         error: {
           code: -32002, // Standard PaywallRequired error
-          message: debitResult.error || "Insufficient Universal MCP Credits.",
+          message: debitResult.error || "Insufficient Universal MCP Credits. Please top up your balance.",
           data: {
             requiredCredits: price,
             tool: toolName,

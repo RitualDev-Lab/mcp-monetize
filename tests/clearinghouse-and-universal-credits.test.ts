@@ -41,8 +41,8 @@ test("EdgeBillingClearinghouse - Debits credits atomically with 3.5% clearinghou
   assert.ok(stats.p99LatencyMs < 15.0);
 });
 
-test("UniversalCreditsManager - Mints and verifies tamper-proof credit vouchers", () => {
-  const manager = new UniversalCreditsManager();
+test("UniversalCreditsManager - Mints and verifies tamper-proof credit vouchers with replay protection", () => {
+  const manager = new UniversalCreditsManager("enterprise_test_signing_secret_32bytes_min");
   const userId = "usr_dev_bob";
 
   const voucher = manager.mintVoucher(userId, "PRO_PACK");
@@ -55,6 +55,12 @@ test("UniversalCreditsManager - Mints and verifies tamper-proof credit vouchers"
   // Tampered voucher
   const tampered = { ...voucher, credits: 99999 };
   assert.strictEqual(manager.verifyVoucher(tampered), false);
+
+  // Atomic redemption and replay rejection
+  assert.strictEqual(manager.redeemVoucher(voucher), true);
+  assert.strictEqual(manager.isRedeemed(voucher.voucherId), true);
+  assert.strictEqual(manager.redeemVoucher(voucher), false, "Replayed voucher must be rejected");
+  assert.strictEqual(manager.verifyVoucher(voucher), false, "Already redeemed voucher must be rejected");
 });
 
 test("withUniversalMcpMonetize - 3-Line Developer SDK enfores paywall and debits credits", async () => {

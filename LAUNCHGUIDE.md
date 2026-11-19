@@ -39,10 +39,14 @@ environment_variables:
     required: true
     docs_url: https://github.com/RitualDev-Lab/mcp-monetize#readme
     description: 32-byte secret key used to mint and verify local PASETO v4 capability tokens. Generate instantly by running `npx mcp-monetize keygen`.
+  - name: DODO_WEBHOOK_SECRET
+    required: false
+    docs_url: https://app.dodopayments.com/developers
+    description: Webhook secret from Dodo Payments Dashboard to automatically credit user balances upon successful payment (also accepts DODO_PAYMENTS_WEBHOOK_KEY).
   - name: DODO_PAYMENTS_WEBHOOK_KEY
     required: false
     docs_url: https://app.dodopayments.com/developers
-    description: Webhook secret from Dodo Payments Dashboard to automatically credit user balances upon successful payment.
+    description: Webhook signing secret alias from Dodo Payments Dashboard.
   - name: STRIPE_WEBHOOK_SECRET
     required: false
     docs_url: https://dashboard.stripe.com/webhooks
@@ -59,8 +63,8 @@ Monetize your AI agent tools in 3 lines of code with [Dodo Payments](https://dod
 
 | Variable Name | Required | Docs / Signup URL | Description |
 |---|---|---|---|
-| `MCP_MONETIZE_SECRET` | **Yes** | `https://github.com/RitualDev-Lab/mcp-monetize#readme` | 32-byte secret key used to mint and verify local PASETO v4 capability tokens. Run `npx mcp-monetize keygen` to generate. |
-| `DODO_PAYMENTS_WEBHOOK_KEY` | No | `https://app.dodopayments.com/developers` | Webhook secret from Dodo Payments Dashboard to auto-credit user balances upon payment. |
+| `MCP_MONETIZE_SECRET` | **Yes** | `https://github.com/RitualDev-Lab/mcp-monetize#readme` | 32-byte secret key used to mint and verify local PASETO capability tokens. Run `npx mcp-monetize keygen` to generate. |
+| `DODO_WEBHOOK_SECRET` | No | `https://app.dodopayments.com/developers` | Webhook secret from Dodo Payments Dashboard to auto-credit user balances upon payment (accepts alias `DODO_PAYMENTS_WEBHOOK_KEY`). |
 | `STRIPE_WEBHOOK_SECRET` | No | `https://dashboard.stripe.com/webhooks` | Webhook signing secret from Stripe Dashboard for automatic quota fulfillment. |
 
 ## Quick Installation

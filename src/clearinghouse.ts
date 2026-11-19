@@ -58,7 +58,7 @@ export class EdgeBillingClearinghouse {
     if (currentBalance < params.creditsCost) {
       return {
         success: false,
-        error: `Insufficient Universal MCP Credits. Required: ${params.creditsCost}, Available: ${currentBalance}. Top up at https://ritualdev.in/credits`,
+        error: "Insufficient Universal MCP Credits. Please top up your balance at https://ritualdev.in/credits",
       };
     }
 

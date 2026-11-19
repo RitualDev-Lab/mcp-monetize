@@ -2,10 +2,10 @@
 
 /**
  * mcp-monetize CLI
- * Command line utility to issue PASETO v4 capability tokens, verify tokens, and configure billing
+ * Command line utility to issue PASETO capability tokens, verify tokens, and configure billing
  */
 
-const { PasetoCapabilityManager } = require('../dist/capability.js');
+const { McpCapabilityTokenManager, PasetoCapabilityManager } = require('../dist/capability.js');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -51,33 +51,52 @@ if (command === 'keygen') {
 if (command === 'init') {
   const envPath = path.join(process.cwd(), '.env');
   const key = crypto.randomBytes(32).toString('hex');
-  const template = `
-# mcp-monetize configuration
-MCP_MONETIZE_SECRET=${key}
-MCP_MONETIZE_STORE=sqlite
-MCP_MONETIZE_SQLITE_PATH=./mcp-monetize.db
-# Dodo Payments
-DODO_API_KEY=
-DODO_WEBHOOK_SECRET=
-# Stripe
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-`.trimStart();
+  const variables = [
+    `# mcp-monetize configuration`,
+    `MCP_MONETIZE_SECRET=${key}`,
+    `MCP_MONETIZE_STORE=sqlite`,
+    `MCP_MONETIZE_SQLITE_PATH=./mcp-monetize.db`,
+    `# Dodo Payments`,
+    `DODO_API_KEY=`,
+    `DODO_WEBHOOK_SECRET=`,
+    `# Stripe`,
+    `STRIPE_SECRET_KEY=`,
+    `STRIPE_WEBHOOK_SECRET=`
+  ];
 
   if (fs.existsSync(envPath)) {
-    console.log('.env already exists. Appending mcp-monetize variables if missing.');
-    fs.appendFileSync(envPath, '\n' + template);
+    const existingContent = fs.readFileSync(envPath, 'utf8');
+    const missing = variables.filter(line => {
+      if (line.startsWith('#') || !line.includes('=')) return false;
+      const keyName = line.split('=')[0];
+      return !existingContent.includes(`${keyName}=`);
+    });
+
+    if (missing.length > 0) {
+      console.log('.env already exists. Appending missing mcp-monetize variables without duplicates.');
+      fs.appendFileSync(envPath, '\n# Added by mcp-monetize init\n' + missing.join('\n') + '\n');
+    } else {
+      console.log('.env already contains all mcp-monetize configuration variables. No duplicates added.');
+    }
+    try { fs.chmodSync(envPath, 0o600); } catch (_) {}
   } else {
-    fs.writeFileSync(envPath, template);
-    console.log('Created .env with new PASETO v4 secret key.');
+    fs.writeFileSync(envPath, variables.join('\n') + '\n', { mode: 0o600 });
+    console.log('Created .env with secure permissions (0600) and new PASETO secret key.');
   }
   process.exit(0);
 }
 
 if (command === 'token') {
   const subCommand = args[1];
-  const secret = process.env.MCP_MONETIZE_SECRET || 'ritual_default_paseto_capability_secret_key_2026';
-  const manager = new PasetoCapabilityManager(secret);
+  const secretIdx = args.indexOf('--secret');
+  const secret = secretIdx !== -1 ? args[secretIdx + 1] : process.env.MCP_MONETIZE_SECRET;
+
+  if (!secret || secret.length < 16) {
+    console.error('Error: MCP_MONETIZE_SECRET environment variable or --secret flag is required (min 16 bytes). Default hardcoded secrets are strictly prohibited.');
+    process.exit(1);
+  }
+
+  const manager = new (McpCapabilityTokenManager || PasetoCapabilityManager)(secret);
 
   if (subCommand === 'issue') {
     const userId = args[2] || 'usr_anonymous';
@@ -92,10 +111,10 @@ if (command === 'token') {
     const ttlHours = ttlIdx !== -1 ? parseInt(args[ttlIdx + 1], 10) : 24;
 
     const token = manager.issueToken({
-      userId,
+      subject: userId,
       scopes,
-      balance,
-      ttlSeconds: ttlHours * 3600
+      creditsRemaining: balance,
+      expiresAt: new Date(Date.now() + ttlHours * 3600 * 1000).toISOString(),
     });
 
     console.log(`\nIssued PASETO v4 Capability Token for ${userId}:`);

@@ -105,7 +105,16 @@ export class JsonFileTokenStore extends MemoryTokenStore {
       for (const k of keys) {
         data[k] = (this as any).users.get(k);
       }
-      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), "utf8");
+      
+      const dir = path.dirname(this.filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+      }
+
+      // Atomic write pattern: write to tmp file with 0600 permissions, then rename
+      const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
+      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), { encoding: "utf8", mode: 0o600 });
+      fs.renameSync(tempPath, this.filePath);
     } catch (err) {
       console.warn("[mcp-monetize] Could not persist credit file:", err);
     }

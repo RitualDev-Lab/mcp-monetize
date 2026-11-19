@@ -124,33 +124,68 @@ test("McpLicenseValidator generates and verifies tamper-proof license keys", () 
   assert.equal(failRes.valid, false);
 });
 
-test("PaymentWebhookHandler fulfills Dodo and Stripe events", async () => {
+test("PaymentWebhookHandler fulfills Dodo and Stripe events with valid HMAC authentication", async () => {
+  const crypto = require("node:crypto");
   const { PaymentWebhookHandler, MemoryTokenStore } = require("../src/index.js");
   const store = new MemoryTokenStore(0);
-  const handler = new PaymentWebhookHandler({ store });
+  const dodoSecret = "whsec_dodo_secret_32bytes_enterprise";
+  const stripeSecret = "whsec_stripe_secret_32bytes_test";
+
+  const handler = new PaymentWebhookHandler({
+    store,
+    dodoWebhookSecret: dodoSecret,
+    stripeWebhookSecret: stripeSecret,
+  });
 
   // Dodo payment.succeeded event
-  await handler.handleDodoWebhook({
+  const dodoPayload = {
+    id: "evt_dodo_fulfillment_1",
     type: "payment.succeeded",
     data: {
       customer: { customer_id: "buyer_dodo" },
       metadata: { credits: 500 },
     },
-  });
+  };
+  const dodoRaw = JSON.stringify(dodoPayload);
+  const dodoSig = crypto.createHmac("sha256", dodoSecret).update(dodoRaw).digest("hex");
+  const dodoRes = await handler.handleDodoWebhook(dodoPayload, dodoSig, dodoRaw);
+  assert.equal(dodoRes.success, true);
 
   const user = store.getUser("buyer_dodo");
   assert.equal(user.paidCredits, 500);
 
   // Stripe subscription event
-  await handler.handleStripeWebhook({
+  const stripePayload = {
+    id: "evt_stripe_sub_1",
     type: "customer.subscription.created",
     data: {
       object: {
         customer: "buyer_stripe",
       },
     },
-  });
+  };
+  const stripeRaw = JSON.stringify(stripePayload);
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const stripeSig = crypto.createHmac("sha256", stripeSecret).update(`${ts}.${stripeRaw}`).digest("hex");
+  const stripeRes = await handler.handleStripeWebhook(stripePayload, `t=${ts},v1=${stripeSig}`, stripeRaw);
+  assert.equal(stripeRes.success, true);
 
   const subUser = store.getUser("buyer_stripe");
   assert.equal(subUser.isSubscriber, true);
+});
+
+test("McpLicenseValidator tolerates hyphens in base64url payloads and performs constant-time HMAC check", () => {
+  const { McpLicenseValidator } = require("../src/index.js");
+  const validator = new McpLicenseValidator("secret_test_key_32bytes_min_prod");
+
+  const license = validator.generateLicenseKey({
+    customerEmail: "user-with-dashes@domain-test.co.uk",
+    tier: "enterprise",
+  });
+
+  assert.match(license, /^MCP-ENTERPRISE-/);
+  const res = validator.validateLicenseKey(license);
+  assert.equal(res.valid, true);
+  assert.equal(res.tier, "enterprise");
+  assert.equal(res.customerEmail, "user-with-dashes@domain-test.co.uk");
 });

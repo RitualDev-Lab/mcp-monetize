@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { generatePaywallResponse } from "./paywall.js";
 import { MemoryTokenStore } from "./store.js";
 import { McpCapabilityTokenManager } from "./capability.js";
@@ -5,23 +6,8 @@ import type { McpMonetizeOptions, McpToolCallResult } from "./types.js";
 
 /**
  * Wraps an MCP tool handler with automated paywall, quota, credit verification,
- * and cryptographic PASETO capability token validation.
+ * and cryptographic capability token validation with server-side spend tracking.
  * Compatible with @modelcontextprotocol/sdk Server tool definitions.
- *
- * @example
- * ```typescript
- * server.tool(
- *   "deep_research",
- *   { query: z.string() },
- *   withMcpMonetization(async (args) => {
- *     return { content: [{ type: "text", text: `Results for ${args.query}` }] };
- *   }, {
- *     checkoutUrl: "https://checkout.dodopayments.com/buy/pdt_xyz",
- *     priceLabel: "$5 for 500 queries",
- *     freeTierCalls: 5
- *   })
- * );
- * ```
  */
 export function withMcpMonetization<TArgs extends Record<string, any> = Record<string, any>>(
   handler: (args: TArgs, extra?: any) => Promise<McpToolCallResult> | McpToolCallResult,
@@ -30,8 +16,15 @@ export function withMcpMonetization<TArgs extends Record<string, any> = Record<s
   const freeTierCalls = options.freeTierCalls ?? 5;
   const priceLabel = options.priceLabel || "$0.05 / call";
   const store = options.store || new MemoryTokenStore(freeTierCalls);
-  const capabilityManager: McpCapabilityTokenManager =
-    options.capabilityManager || new McpCapabilityTokenManager(options.capabilitySecret);
+  
+  // Initialize capability manager with explicit secret or fallback environment variable
+  let capabilityManager: McpCapabilityTokenManager | undefined = options.capabilityManager;
+  if (!capabilityManager) {
+    const secret = options.capabilitySecret || process.env.MCP_MONETIZE_SECRET;
+    if (secret && secret.length >= 16) {
+      capabilityManager = new McpCapabilityTokenManager(secret);
+    }
+  }
 
   return async (args: TArgs, extra?: any): Promise<McpToolCallResult> => {
     // 0. Cryptographic Capability Token Verification (Sub-millisecond offline path)
@@ -40,18 +33,54 @@ export function withMcpMonetization<TArgs extends Record<string, any> = Record<s
       (extra && (extra.capabilityToken || extra._capabilityToken));
 
     if (typeof presentedToken === "string") {
+      if (!capabilityManager) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "[MCP-MONETIZE] Capability token presented but capabilityManager secret is not configured.",
+            },
+          ],
+          isError: true,
+        };
+      }
+
       const toolScope = options.requiredScope || (extra?.name ? `tool:${extra.name}` : undefined);
       const verification = capabilityManager.verifyToken(presentedToken, toolScope);
 
-      if (verification.valid) {
-        // Authenticated cryptographically in < 0.2ms — execute tool logic immediately
+      if (verification.valid && verification.payload) {
+        // Enforce server-side credit balance decrement on each call
+        const spend = capabilityManager.spendToken(
+          verification.payload.tokenId,
+          verification.payload.creditsRemaining,
+          1
+        );
+
+        if (!spend.allowed) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "[MCP-MONETIZE] Insufficient capability token balance. Please acquire a fresh capability token.",
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Authenticated cryptographically — bind identity to verified subject
+        const tokenUser = verification.payload.subject;
+        if (extra && typeof extra === "object") {
+          extra.authenticatedUser = tokenUser;
+        }
+
         return handler(args, extra);
       } else {
         return {
           content: [
             {
               type: "text",
-              text: `[MCP-MONETIZE] Cryptographic Capability Token Verification Failed: ${verification.error}`,
+              text: `[MCP-MONETIZE] Capability verification failed: ${verification.error || "Invalid token"}`,
             },
           ],
           isError: true,
@@ -59,19 +88,24 @@ export function withMcpMonetization<TArgs extends Record<string, any> = Record<s
       }
     }
 
-    // 1. Resolve User / Client Identifier
+    // 1. Resolve User / Client Identifier from verified transport / session first
     let userId: string;
     if (options.getUserId) {
       userId = options.getUserId(args, extra);
-    } else if (args && typeof args.userId === "string") {
-      userId = args.userId;
-    } else if (args && typeof args.apiKey === "string") {
-      userId = args.apiKey;
-    } else if (extra && extra.sessionId) {
+    } else if (extra?.auth?.userId) {
+      userId = String(extra.auth.userId);
+    } else if (extra?.sessionId) {
       userId = String(extra.sessionId);
+    } else if (extra?.connection?.id) {
+      userId = String(extra.connection.id);
+    } else if (args && typeof args.userId === "string" && options.allowClientSuppliedUserId !== false) {
+      userId = args.userId;
+    } else if (args && typeof args.apiKey === "string" && options.allowClientSuppliedUserId !== false) {
+      userId = args.apiKey;
     } else {
-      // Default to host/machine fallback identifier for single-seat local agents (Claude Desktop / Cursor)
-      userId = process.env.USER || process.env.USERNAME || "default_client";
+      // Default to deterministic host identity hash for single-seat local agents (Claude Desktop / Cursor)
+      const hostUser = process.env.USER || process.env.USERNAME || "local_agent";
+      userId = `agent_${crypto.createHash("sha256").update(hostUser).digest("hex").slice(0, 16)}`;
     }
 
     // 2. Resolve Checkout URL (can be dynamic function based on userId)
@@ -97,5 +131,3 @@ export function withMcpMonetization<TArgs extends Record<string, any> = Record<s
     return handler(args, extra);
   };
 }
-
-export const monetizeTool = withMcpMonetization;

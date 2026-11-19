@@ -36,6 +36,8 @@ export interface McpMonetizeOptions {
   capabilityManager?: any;
   /** Required capability scope for this specific tool (e.g. 'tool:search') */
   requiredScope?: string;
+  /** Whether to allow client-supplied userId in tool arguments (defaults to true for dev/single-tenant) */
+  allowClientSuppliedUserId?: boolean;
 }
 
 export interface McpToolCallResult {

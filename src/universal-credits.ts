@@ -42,11 +42,22 @@ export interface SignedCreditVoucher {
   signature: string;
 }
 
+/**
+ * Universal Pre-Paid MCP Credits Voucher Manager.
+ * Features constant-time HMAC verification, replay defense, and zero hardcoded fallback secrets.
+ */
 export class UniversalCreditsManager {
   private signingSecret: string;
+  private redeemedVouchers: Set<string> = new Set();
 
   constructor(signingSecret?: string) {
-    this.signingSecret = signingSecret || "ritual-mcp-universal-clearinghouse-secret-key-32b";
+    const secret = signingSecret || process.env.MCP_MONETIZE_SECRET;
+    if (!secret || secret.length < 16) {
+      throw new Error(
+        "UniversalCreditsManager requires a secure secret of at least 16 bytes (recommended 32+ bytes, configured via constructor or MCP_MONETIZE_SECRET env variable). Default hardcoded secrets are strictly prohibited."
+      );
+    }
+    this.signingSecret = secret;
   }
 
   public mintVoucher(userId: string, packId: "STARTER_PACK" | "PRO_PACK" | "ENTERPRISE_PACK"): SignedCreditVoucher {
@@ -71,12 +82,51 @@ export class UniversalCreditsManager {
     };
   }
 
-  public verifyVoucher(voucher: SignedCreditVoucher): boolean {
-    if (Date.now() > voucher.expiresAt) return false;
+  /**
+   * Cryptographically verifies a credit voucher.
+   * Performs constant-time comparison, bounds checking, and replay verification.
+   */
+  public verifyVoucher(voucher: SignedCreditVoucher, options?: { autoRedeem?: boolean }): boolean {
+    if (!voucher || !voucher.voucherId || !voucher.signature) {
+      return false;
+    }
+
+    // Replay check
+    if (this.redeemedVouchers.has(voucher.voucherId)) {
+      return false;
+    }
+
+    if (Date.now() > voucher.expiresAt) {
+      return false;
+    }
 
     const payload = `${voucher.voucherId}:${voucher.userId}:${voucher.credits}:${voucher.issuedAt}:${voucher.expiresAt}`;
     const expectedSig = crypto.createHmac("sha256", this.signingSecret).update(payload).digest("hex");
 
-    return crypto.timingSafeEqual(Buffer.from(voucher.signature), Buffer.from(expectedSig));
+    const sigBuf = Buffer.from(voucher.signature);
+    const expBuf = Buffer.from(expectedSig);
+
+    // Prevent throwing when buffers are different lengths
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return false;
+    }
+
+    if (options?.autoRedeem) {
+      this.redeemedVouchers.add(voucher.voucherId);
+    }
+
+    return true;
+  }
+
+  /**
+   * Atomically verifies and redeems a credit voucher.
+   * Prevents repeated redemptions of the same voucher.
+   */
+  public redeemVoucher(voucher: SignedCreditVoucher): boolean {
+    return this.verifyVoucher(voucher, { autoRedeem: true });
+  }
+
+  public isRedeemed(voucherId: string): boolean {
+    return this.redeemedVouchers.has(voucherId);
   }
 }
