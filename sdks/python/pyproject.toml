@@ -13,7 +13,7 @@ authors = [
     { name = "RitualDev Lab", email = "security@ritualdev.in" }
 ]
 dependencies = [
-    "cryptography>=41.0.0"
+    "cryptography>=44.0.2"
 ]
 keywords = ["mcp", "model-context-protocol", "monetization", "billing", "fastmcp", "stripe", "dodo-payments"]
 classifiers = [
