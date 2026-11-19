@@ -3,7 +3,7 @@
 > **Drop-in billing, credit tracking, and paywall middleware for Model Context Protocol (MCP) servers.**  
 > Monetize your AI agent tools in 3 lines of code with [Dodo Payments](https://dodopayments.com) & Stripe.
 
-[![npm version](https://img.shields.io/badge/npm-v0.1.0-blue.svg)](https://npmjs.com/package/mcp-monetize)
+[![npm version](https://img.shields.io/badge/npm-v0.1.0-blue.svg)](https://npmjs.com/package/@ritualdev-lab/mcp-monetize)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-1.0%2B-purple.svg)](https://modelcontextprotocol.io)
 
@@ -30,16 +30,16 @@ Developers are publishing thousands of Model Context Protocol (MCP) servers for 
 
 ### 1. Install
 ```bash
-npm install mcp-monetize
+npm install @ritualdev-lab/mcp-monetize
 # or
-pnpm add mcp-monetize
+pnpm add @ritualdev-lab/mcp-monetize
 ```
 
 ### 2. Wrap your MCP tool handler
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { withMcpMonetization } from "mcp-monetize";
+import { withMcpMonetization } from "@ritualdev-lab/mcp-monetize";
 import { z } from "zod";
 
 const server = new McpServer({ name: "market-oracle", version: "1.0.0" });

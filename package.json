@@ -1,5 +1,5 @@
 {
-  "name": "mcp-monetize",
+  "name": "@ritualdev-lab/mcp-monetize",
   "version": "0.1.0",
   "description": "Drop-in billing & paywall middleware for Model Context Protocol (MCP) servers with Dodo Payments & Stripe support",
   "main": "dist/index.js",

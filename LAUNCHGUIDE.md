@@ -27,10 +27,10 @@ tags:
 documentation_url: https://github.com/RitualDev-Lab/mcp-monetize#readme
 repository: https://github.com/RitualDev-Lab/mcp-monetize
 homepage: https://ritualdev.in/mcp-builder
-npm: mcp-monetize
+npm: "@ritualdev-lab/mcp-monetize"
 transport: stdio
 command: npx
-args: ["-y", "mcp-monetize"]
+args: ["-y", "@ritualdev-lab/mcp-monetize"]
 pricing:
   type: free
   license: MIT
@@ -70,9 +70,9 @@ Monetize your AI agent tools in 3 lines of code with [Dodo Payments](https://dod
 ## Quick Installation
 
 ```bash
-npm install mcp-monetize
+npm install @ritualdev-lab/mcp-monetize
 # or run CLI
-npx mcp-monetize --help
+npx -y @ritualdev-lab/mcp-monetize --help
 ```
 
 ## Stdio MCP Server Config
@@ -82,7 +82,7 @@ npx mcp-monetize --help
   "mcpServers": {
     "mcp-monetize": {
       "command": "npx",
-      "args": ["-y", "mcp-monetize"]
+      "args": ["-y", "@ritualdev-lab/mcp-monetize"]
     }
   }
 }
