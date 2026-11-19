@@ -1,13 +1,14 @@
 ---
 name: mcp-monetize
+title: MCP Monetize
 tagline: Drop-in billing, paywalls & credit middleware for MCP servers with Dodo & Stripe
-description: Drop-in billing, credit tracking, and paywall middleware for Model Context Protocol (MCP) servers. Enables MCP developers to monetize AI tools with usage quotas, sub-0.2ms PASETO v4 capability tokens, and instant in-chat payment links via Dodo Payments and Stripe.
+description: Drop-in billing, credit tracking, and paywall middleware for Model Context Protocol (MCP) servers. Enables AI agent developers to monetize tools in Claude Desktop, Cursor, and Windsurf with usage quotas, sub-0.2ms PASETO v4 capability tokens, and interactive in-chat payment links via Dodo Payments and Stripe.
 category: Developer Tools
 use_cases:
   - Tool Monetization
-  - API Metering & Quotas
   - In-Chat Paywalls
-  - PASETO v4 Capability Tokens
+  - API Metering & Quotas
+  - PASETO Capability Tokens
   - AI Billing & Subscriptions
 getting_started:
   - "Check remaining MCP credit balance: get_balance"
@@ -28,9 +29,25 @@ repository: https://github.com/RitualDev-Lab/mcp-monetize
 homepage: https://ritualdev.in/mcp-builder
 npm: mcp-monetize
 pypi: mcp-monetize
+transport: stdio
+command: npx
+args: ["-y", "mcp-monetize"]
 pricing:
   type: free
   license: MIT
+environment_variables:
+  - name: MCP_MONETIZE_SECRET
+    required: true
+    docs_url: https://github.com/RitualDev-Lab/mcp-monetize#readme
+    description: 32-byte secret key used to mint and verify local PASETO v4 capability tokens. Generate instantly by running `npx mcp-monetize keygen`.
+  - name: DODO_PAYMENTS_WEBHOOK_KEY
+    required: false
+    docs_url: https://app.dodopayments.com/developers
+    description: Webhook secret from Dodo Payments Dashboard to automatically credit user balances upon successful payment.
+  - name: STRIPE_WEBHOOK_SECRET
+    required: false
+    docs_url: https://dashboard.stripe.com/webhooks
+    description: Webhook signing secret from Stripe Dashboard for automatic quota fulfillment.
 ---
 
 # mcp-monetize
@@ -39,19 +56,19 @@ pricing:
 
 Monetize your AI agent tools in 3 lines of code with [Dodo Payments](https://dodopayments.com) & Stripe.
 
-## Features
+## Setup Requirements
 
-- **3-Line Middleware**: Wrap any MCP tool handler with `withMcpMonetization`.
-- **In-Chat Payment Links**: Returns interactive checkout links directly in Claude Desktop, Cursor, or Windsurf when free quotas expire.
-- **Sub-0.2ms Capability Tokens**: High-performance local token verification using PASETO v4.
-- **Multi-Gateway**: Native support for Dodo Payments (Global + India UPI/Cards) and Stripe.
-- **Zero Lock-in**: 100% open-source MIT license.
+| Variable Name | Required | Docs / Signup URL | Description |
+|---|---|---|---|
+| `MCP_MONETIZE_SECRET` | **Yes** | `https://github.com/RitualDev-Lab/mcp-monetize#readme` | 32-byte secret key used to mint and verify local PASETO v4 capability tokens. Run `npx mcp-monetize keygen` to generate. |
+| `DODO_PAYMENTS_WEBHOOK_KEY` | No | `https://app.dodopayments.com/developers` | Webhook secret from Dodo Payments Dashboard to auto-credit user balances upon payment. |
+| `STRIPE_WEBHOOK_SECRET` | No | `https://dashboard.stripe.com/webhooks` | Webhook signing secret from Stripe Dashboard for automatic quota fulfillment. |
 
 ## Quick Installation
 
 ```bash
 npm install mcp-monetize
-# or
+# or run CLI
 npx mcp-monetize --help
 ```
 
