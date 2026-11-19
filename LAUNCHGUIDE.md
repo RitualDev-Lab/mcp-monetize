@@ -28,7 +28,6 @@ documentation_url: https://github.com/RitualDev-Lab/mcp-monetize#readme
 repository: https://github.com/RitualDev-Lab/mcp-monetize
 homepage: https://ritualdev.in/mcp-builder
 npm: mcp-monetize
-pypi: mcp-monetize
 transport: stdio
 command: npx
 args: ["-y", "mcp-monetize"]
