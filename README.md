@@ -64,6 +64,23 @@ server.tool(
 
 ---
 
+## 📦 1-Click Production Starter Kit
+
+Looking for a complete, runnable production MCP server with token-bucket rate limiting, SQLite persistence, and Dodo Payments / Stripe webhook listener?
+
+Check out [`examples/production-starter-kit/`](examples/production-starter-kit/):
+- **`server.ts`**: Metered tools (`financial_report`, `semantic_search`, `ping`) with burst rate limiting and PASETO capability tokens.
+- **`webhook-server.ts`**: HTTP webhook listener on port 4001 fulfilling customer credits upon payment.
+- **`client-demo.ts`**: Interactive script simulating free calls, paywall trigger, and webhook fulfillment.
+
+```bash
+cd examples/production-starter-kit
+npm install
+npm run demo
+```
+
+---
+
 ## 🖼️ How the Agent Sees the Paywall
 
 When a user in **Claude Desktop**, **Cursor**, or **Windsurf** exhausts their free calls, the agent automatically receives structured markdown prompting the user to top up:
