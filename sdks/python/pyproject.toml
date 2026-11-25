@@ -19,11 +19,22 @@ keywords = ["mcp", "model-context-protocol", "monetization", "billing", "fastmcp
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 
 [project.urls]
 Homepage = "https://ritualdev.in"
 Repository = "https://github.com/RitualDev-Lab/mcp-monetize"
 Issues = "https://github.com/RitualDev-Lab/mcp-monetize/issues"
+
+[tool.setuptools.package-data]
+mcp_monetize = ["py.typed"]
