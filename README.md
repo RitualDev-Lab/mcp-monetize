@@ -3,9 +3,11 @@
 > **Drop-in billing, credit tracking, and paywall middleware for Model Context Protocol (MCP) servers.**  
 > Monetize your AI agent tools in 3 lines of code with [Dodo Payments](https://dodopayments.com) & Stripe.
 
-[![npm version](https://img.shields.io/badge/npm-v0.1.0-blue.svg)](https://npmjs.com/package/@ritualdev-lab/mcp-monetize)
+[![npm version](https://img.shields.io/badge/npm-v0.1.3-blue.svg)](https://www.npmjs.com/package/@ritualdev-lab/mcp-monetize)
+[![PyPI version](https://img.shields.io/badge/PyPI-v0.1.3-blue.svg)](https://pypi.org/project/mcp-monetize/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![MCP Compatible](https://img.shields.io/badge/MCP-1.0%2B-purple.svg)](https://modelcontextprotocol.io)
+[![Launch on MCPShelf](https://img.shields.io/badge/Promote-MCPShelf_Boost-f59e0b.svg)](https://mcp.ritualdev.in/boost.html)
 
 ---
 
