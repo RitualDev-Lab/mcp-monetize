@@ -1,4 +1,4 @@
-export type PaymentProvider = "dodo" | "stripe" | "custom";
+export type PaymentProvider = "dodo" | "stripe" | "polar" | "custom";
 
 export interface UserCredits {
   userId: string;
